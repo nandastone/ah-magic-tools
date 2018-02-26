@@ -6,6 +6,10 @@ const _ = require('lodash')
 
 const packageJson = require('./package.json')
 const INVTYPE_NON_EQUIP = 0
+const BONDING_BIND_ON_PICKUP = 1
+const BONDING_BIND_ON_EQUIP = 2
+const BONDING_BIND_ON_USE = 3
+const BONDING_QUEST = 3
 
 let fileArg = ''
 
@@ -14,6 +18,7 @@ program
   .usage('[options] <file>')
   .option('--equip-only', 'Only export items that are equipable.')
   .option('--min-quality [quality]', 'Minimum item quality.')
+  .option('--tradable-only', 'Only export items that are tradable (BOE, BOU).')
   .option('--json', 'Output as JSON.')
   .action(file => fileArg = file)
 
@@ -33,6 +38,14 @@ csv()
   const castItem = _.mapValues(item, (value) => {
     return !isNaN(value) ? _.toNumber(value) : value
   })
+
+  // Are we only parsing tradable items?
+  if (
+    program.tradableOnly &&
+    [BONDING_BIND_ON_PICKUP, BONDING_QUEST].includes(castItem.bonding)
+  ) {
+    return
+  }
 
   // Are we only parsing equipable items?
   if (
@@ -63,6 +76,7 @@ csv()
       items.forEach(item => {
         console.log(`(#${item.entry}) ${item.name}`)
       })
+      console.log(`Total items: ${items.length}`)
     }
   }
 })
