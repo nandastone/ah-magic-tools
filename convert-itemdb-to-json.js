@@ -31,9 +31,7 @@ if (!fileArg) {
 
 const items = []
 
-csv()
-.fromFile(fileArg)
-.on('json', (item) => {
+const processItem = item => {
   // Transform data.
   const castItem = _.mapValues(item, (value) => {
     return !isNaN(value) ? _.toNumber(value) : value
@@ -63,20 +61,34 @@ csv()
     return
   }
 
-  // Build array of items to output.
-  items.push(castItem)
-})
-.on('done', (error) => {
-  if (error) {
-    console.error(error)
+  return item
+}
+
+const onError = (errpr) => {
+  console.error(error)
+}
+
+const onComplete = (...rest) => {
+  if (program.json) {
+    console.log(JSON.stringify(items))
   } else {
-    if (program.json) {
-      console.log(JSON.stringify(items))
-    } else {
-      items.forEach(item => {
-        console.log(`(#${item.entry}) ${item.name}`)
-      })
-      console.log(`Total items: ${items.length}`)
-    }
+    items.forEach(item => {
+      console.log(`(#${item.entry}) ${item.name}`)
+    })
+    console.log(`Total items: ${items.length}`)
   }
-})
+}
+
+csv()
+  .fromFile(fileArg)
+  .subscribe(
+    (json) => {
+      const item = processItem(json)
+
+      if (item) {
+        items.push(item)
+      }
+    },
+    onError,
+    onComplete
+  )
